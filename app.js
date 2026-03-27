@@ -74,10 +74,13 @@ function render(){
 
 function stripShippingNoise(text){
   let s = String(text || '');
-  s = s.replace(/Exp\w*dition\s*(?:EUR|€)[^A-Za-z0-9]{0,5}[0-9\.,]+[\s\S]*?Ajouter au panier/gi, '');
-  s = s.replace(/En savoir plus sur les tarifs d.?exp\w*dition/gi, '');
-  s = s.replace(/Exp\w*dition nationale\s*:\s*France/gi, '');
-  s = s.replace(/Quantit\w* disponible\s*:\s*\d+\s*disponible\(s\)/gi, '');
+  // Remove whole shipping block variants (accents/encoding glitches included)
+  s = s.replace(/Exp[^\n]{0,40}dition[\s\S]*?Ajouter au panier/gi, '');
+  s = s.replace(/En savoir plus sur les tarifs d.?exp[^\s]*dition/gi, '');
+  s = s.replace(/Exp[^\n]{0,30}dition nationale\s*:\s*France/gi, '');
+  s = s.replace(/Exp[^\n]{0,10}\s+\w+/gi, ''); // Expédition à ...
+  s = s.replace(/Quantit[^\n]{0,20}disponible\s*:\s*\d+\s*disponible\(s\)/gi, '');
+  s = s.replace(/Ajouter au panier/gi, '');
   return s.replace(/\s+/g, ' ').trim();
 }
 
