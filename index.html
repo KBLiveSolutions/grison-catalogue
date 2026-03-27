@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Catalogue E. & J.L GRISON</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Catalogue — E. & J.L GRISON</h1>
+    <p id="meta">Chargement…</p>
+    <div class="controls">
+      <input id="q" type="search" placeholder="Rechercher (titre, réf, description)" />
+      <select id="theme">
+        <option value="">Tous les thèmes</option>
+      </select>
+      <select id="sort">
+        <option value="ref_desc">Référence (desc)</option>
+        <option value="ref_asc">Référence (asc)</option>
+        <option value="price_asc">Prix croissant</option>
+        <option value="price_desc">Prix décroissant</option>
+        <option value="title_asc">Titre A→Z</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <p id="count"></p>
+    <div id="list" class="grid"></div>
+  </main>
+
+  <footer>
+    <small>Catalogue extrait localement pour consultation autonome.</small>
+  </footer>
+
+  <script src="data/catalog.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
