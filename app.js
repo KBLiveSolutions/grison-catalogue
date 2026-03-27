@@ -52,8 +52,8 @@ function render(){
     const mainImg = gallery[0] || '';
     const mini = gallery.map((u) => `<img class="thumb-mini" data-target="main-${idx}" src="${escapeAttr(u)}" alt="mini" onerror="this.style.display='none'" onclick="var m=document.getElementById('main-${idx}'); if(m){m.src=this.src;}" />`).join('');
     const visual = gallery.length
-      ? `<img id="main-${idx}" class="thumb" loading="lazy" src="${escapeAttr(mainImg)}" alt="${escapeAttr(it.title||'Livre')}" onerror="this.style.display='none'; var n=this.nextElementSibling; if(n&&n.classList.contains('no-thumb')) n.style.display='flex';" /><div class="no-thumb" style="display:none">Pas d'image</div>`
-      : `<div class="no-thumb">Pas d'image</div>`;
+      ? `<img id="main-${idx}" class="thumb" loading="lazy" src="${escapeAttr(mainImg)}" alt="${escapeAttr(it.title||'Livre')}" onerror="this.style.display='none'; var n=this.nextElementSibling; if(n&&n.classList.contains('no-thumb')) n.style.display='flex';" /><div class="no-thumb" style="display:none">Image sur demande</div>`
+      : `<div class="no-thumb">Image sur demande</div>`;
 
     return `
     <article class="card">
@@ -62,7 +62,7 @@ function render(){
       <h3>${escapeHtml(it.title||'Sans titre')}</h3>
       <div class="theme">${escapeHtml(it.theme||'Divers')}</div>
       <div class="meta">
-        <div><strong>Réf:</strong> ${escapeHtml(it.reference||'—')}</div>
+        <div><strong>Réf:</strong> ${escapeHtml(referenceOf(it))}</div>
         <div><strong>Prix:</strong> ${escapeHtml(it.price_eur||'—')} €</div>
         <div><strong>État:</strong> ${escapeHtml(it.condition||'—')}</div>
       </div>
@@ -82,6 +82,13 @@ function stripShippingNoise(text){
   s = s.replace(/Quantit[^\n]{0,20}disponible\s*:\s*\d+\s*disponible\(s\)/gi, '');
   s = s.replace(/Ajouter au panier/gi, '');
   return s.replace(/\s+/g, ' ').trim();
+}
+
+function referenceOf(it){
+  const ref = String(it?.reference || '').trim();
+  if (ref) return ref;
+  const m = String(it?.url || '').match(/\/(\d{6,})\/bd/);
+  return m ? m[1] : '—';
 }
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
