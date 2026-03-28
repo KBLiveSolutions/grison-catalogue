@@ -18,5 +18,17 @@ main { padding: 16px; }
 .card h3 { margin: 0 0 8px; font-size: 1rem; line-height: 1.35; }
 .meta { font-size: .9rem; color: #536074; margin-bottom: 8px; }
 .theme { display:inline-block; font-size:.78rem; background:#eef3ff; color:#2d4c9d; border-radius:999px; padding:2px 8px; margin-bottom:8px; }
+.theme-chip {
+  display: inline-block;
+  font-size: .78rem;
+  background: #eef3ff;
+  color: #2d4c9d;
+  border: 1px solid #d7e3ff;
+  border-radius: 999px;
+  padding: 2px 8px;
+  margin: 2px 4px 2px 0;
+  cursor: pointer;
+}
+.theme-chip:hover { background: #dfe9ff; border-color: #b7cdfc; }
 .desc { font-size: .9rem; color: #2c3442; line-height: 1.4; }
 footer { padding: 10px 16px 20px; color: #6b7382; }

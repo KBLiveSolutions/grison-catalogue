@@ -70,6 +70,13 @@ function render(){
       ? `<img id="main-${idx}" class="thumb" loading="lazy" src="${escapeAttr(mainImg)}" alt="${escapeAttr(it.title||'Livre')}" onerror="this.style.display='none'; var n=this.nextElementSibling; if(n&&n.classList.contains('no-thumb')) n.style.display='flex';" /><div class="no-thumb" style="display:none">Image sur demande</div>`
       : `<div class="no-thumb">Image sur demande</div>`;
 
+    const mainThemeChip = it.theme
+      ? `<button class="theme-chip" data-theme="${escapeAttr(it.theme)}" type="button">${escapeHtml(it.theme)}</button>`
+      : '—';
+    const otherThemeChips = otherThemes.length
+      ? otherThemes.map(t => `<button class="theme-chip" data-theme="${escapeAttr(t)}" type="button">${escapeHtml(t)}</button>`).join(' ')
+      : '—';
+
     return `
     <article class="card">
       ${visual}
@@ -82,8 +89,8 @@ function render(){
         <div><strong>Année:</strong> ${escapeHtml(it.year||'—')}</div>
         <div><strong>Prix:</strong> ${escapeHtml(it.price_eur||'—')} €</div>
         <div><strong>Lieu:</strong> ${escapeHtml(it.place||'—')}</div>
-        <div><strong>Thème principal:</strong> ${escapeHtml(it.theme||'—')}</div>
-        <div><strong>Autres thèmes:</strong> ${escapeHtml(otherThemes.join(', ')||'—')}</div>
+        <div><strong>Thème principal:</strong> ${mainThemeChip}</div>
+        <div><strong>Autres thèmes:</strong> ${otherThemeChips}</div>
       </div>
       <div class="desc">${escapeHtml(it.description||'—')}</div>
     </article>
@@ -134,6 +141,14 @@ sortEl.addEventListener('change', render);
 themeEl.addEventListener('change', render);
 
 listEl.addEventListener('click', (e) => {
+  const chip = e.target.closest('.theme-chip');
+  if (chip) {
+    const selected = chip.getAttribute('data-theme') || '';
+    themeEl.value = selected;
+    render();
+    return;
+  }
+
   const mini = e.target.closest('.thumb-mini');
   if (!mini) return;
   const targetId = mini.getAttribute('data-target');
