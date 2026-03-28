@@ -7,7 +7,6 @@ const listEl = document.getElementById('list');
 const countEl = document.getElementById('count');
 const metaEl = document.getElementById('meta');
 const categoriesEl = document.getElementById('categories');
-const randomEl = document.getElementById('random-picks');
 const homeEl = document.getElementById('home');
 const catalogEl = document.getElementById('catalog');
 const goHomeBtn = document.getElementById('go-home');
@@ -16,14 +15,19 @@ const goCatalogBtn = document.getElementById('go-catalog');
 function numRef(r){ const n = parseInt(String(r||'').replace(/\D+/g,''),10); return Number.isFinite(n)?n:0; }
 function numPrice(p){ const n = parseFloat(String(p||'').replace(',','.')); return Number.isFinite(n)?n:Infinity; }
 
+function compareByMode(x, y, mode){
+  if(mode==='ref_asc') return numRef(x.reference)-numRef(y.reference);
+  if(mode==='ref_desc') return numRef(y.reference)-numRef(x.reference);
+  if(mode==='price_asc') return numPrice(x.price_eur)-numPrice(y.price_eur);
+  if(mode==='price_desc') return numPrice(y.price_eur)-numPrice(x.price_eur);
+  if(mode==='title_asc') return (x.title||'').localeCompare(y.title||'', 'fr');
+  return 0;
+}
+
 function sortItems(arr){
   const mode = sortEl.value;
   const a = [...arr];
-  if(mode==='ref_asc') a.sort((x,y)=>numRef(x.reference)-numRef(y.reference));
-  else if(mode==='ref_desc') a.sort((x,y)=>numRef(y.reference)-numRef(x.reference));
-  else if(mode==='price_asc') a.sort((x,y)=>numPrice(x.price_eur)-numPrice(y.price_eur));
-  else if(mode==='price_desc') a.sort((x,y)=>numPrice(y.price_eur)-numPrice(x.price_eur));
-  else if(mode==='title_asc') a.sort((x,y)=>(x.title||'').localeCompare(y.title||'', 'fr'));
+  a.sort((x,y)=>compareByMode(x,y,mode));
   return a;
 }
 
@@ -39,12 +43,19 @@ function allThemesOf(it){
   return [...new Set(arr.filter(Boolean))];
 }
 
+function themeRank(it, selectedTheme){
+  if (!selectedTheme) return 99;
+  const themes = allThemesOf(it);
+  const idx = themes.indexOf(selectedTheme);
+  return idx === -1 ? 99 : idx; // 0=TH1, 1=TH2, 2=TH3...
+}
+
 function filterItems(){
   const q = normalize(qEl.value.trim());
-  const theme = themeEl.value;
+  const selectedTheme = themeEl.value;
 
   let out = items;
-  if(theme) out = out.filter(it => allThemesOf(it).includes(theme));
+  if(selectedTheme) out = out.filter(it => allThemesOf(it).includes(selectedTheme));
 
   if(q){
     out = out.filter(it => normalize([
@@ -52,7 +63,18 @@ function filterItems(){
       it.editor, it.year, it.price_eur, it.place, ...allThemesOf(it)
     ].join(' ')).includes(q));
   }
-  return sortItems(out);
+
+  const mode = sortEl.value;
+  out = [...out].sort((a,b) => {
+    if (selectedTheme) {
+      const ra = themeRank(a, selectedTheme);
+      const rb = themeRank(b, selectedTheme);
+      if (ra !== rb) return ra - rb; // TH1 puis TH2 puis TH3
+    }
+    return compareByMode(a,b,mode);
+  });
+
+  return out;
 }
 
 function getGallery(it){
@@ -110,32 +132,24 @@ function renderHome(){
     if (!main) return;
     counts.set(main, (counts.get(main) || 0) + 1);
   });
-  const sortedThemes = [...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0], 'fr'));
-  categoriesEl.innerHTML = sortedThemes.map(([theme, count]) =>
-    `<button class="home-theme-chip" data-theme="${escapeAttr(theme)}" type="button">${escapeHtml(theme)} <span>(${count})</span></button>`
-  ).join('');
 
-  const pool = [...items];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  const picks = pool.slice(0, 3);
+  const themes = [...counts.entries()]
+    .sort((a,b)=>a[0].localeCompare(b[0], 'fr'))
+    .map(([name, count]) => ({ name, count, letter: name.charAt(0).toUpperCase() }));
 
-  randomEl.innerHTML = picks.map((it) => {
-    const img = getGallery(it)[0] || '';
-    const thumb = img
-      ? `<img class="pick-thumb" loading="lazy" src="${escapeAttr(img)}" alt="${escapeAttr(it.title||'Livre')}" />`
-      : `<div class="pick-no-thumb">Image sur demande</div>`;
+  const cols = [[], [], [], [], []];
+  themes.forEach((theme, idx) => cols[idx % 5].push(theme));
 
-    return `
-      <article class="pick-card">
-        ${thumb}
-        <h4>${escapeHtml(it.title || 'Sans titre')}</h4>
-        <div class="pick-meta">Réf ${escapeHtml(it.reference||'—')} · ${escapeHtml(it.author||'—')}</div>
-        <button class="home-theme-chip" data-theme="${escapeAttr(it.theme||'')}" type="button">${escapeHtml(it.theme||'Sans thème')}</button>
-      </article>
-    `;
+  categoriesEl.innerHTML = cols.map(col => {
+    let currentLetter = '';
+    const itemsHtml = col.map(t => {
+      const letterBlock = t.letter !== currentLetter
+        ? `<div class="letter-sep">${escapeHtml(t.letter)}</div>`
+        : '';
+      currentLetter = t.letter;
+      return `${letterBlock}<button class="home-theme-chip" data-theme="${escapeAttr(t.name)}" type="button">${escapeHtml(t.name)} <span>(${t.count})</span></button>`;
+    }).join('');
+    return `<div class="cat-col">${itemsHtml}</div>`;
   }).join('');
 }
 
