@@ -219,8 +219,8 @@ async function boot(){
 qEl.addEventListener('input', showCatalog);
 sortEl.addEventListener('change', showCatalog);
 themeEl.addEventListener('change', showCatalog);
-goHomeBtn.addEventListener('click', showHome);
-goCatalogBtn.addEventListener('click', showCatalog);
+if (goHomeBtn) goHomeBtn.addEventListener('click', showHome);
+if (goCatalogBtn) goCatalogBtn.addEventListener('click', showCatalog);
 
 listEl.addEventListener('click', (e) => {
   const chip = e.target.closest('.theme-chip');
