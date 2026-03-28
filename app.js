@@ -137,17 +137,30 @@ function renderHome(){
     .sort((a,b)=>a[0].localeCompare(b[0], 'fr'))
     .map(([name, count]) => ({ name, count, letter: name.charAt(0).toUpperCase() }));
 
-  const cols = [[], [], [], [], []];
-  themes.forEach((theme, idx) => cols[idx % 5].push(theme));
+  // Flux alphabétique continu: A..., B..., C... puis colonne suivante = suite
+  const linear = [];
+  let currentLetter = '';
+  for (const t of themes) {
+    if (t.letter !== currentLetter) {
+      linear.push({ type: 'letter', letter: t.letter });
+      currentLetter = t.letter;
+    }
+    linear.push({ type: 'theme', ...t });
+  }
+
+  const colCount = 5;
+  const chunkSize = Math.ceil(linear.length / colCount) || 1;
+  const cols = [];
+  for (let i = 0; i < colCount; i++) {
+    cols.push(linear.slice(i * chunkSize, (i + 1) * chunkSize));
+  }
 
   categoriesEl.innerHTML = cols.map(col => {
-    let currentLetter = '';
-    const itemsHtml = col.map(t => {
-      const letterBlock = t.letter !== currentLetter
-        ? `<div class="letter-sep">${escapeHtml(t.letter)}</div>`
-        : '';
-      currentLetter = t.letter;
-      return `${letterBlock}<button class="home-theme-chip" data-theme="${escapeAttr(t.name)}" type="button">${escapeHtml(t.name)} <span>(${t.count})</span></button>`;
+    const itemsHtml = col.map(item => {
+      if (item.type === 'letter') {
+        return `<div class="letter-sep">${escapeHtml(item.letter)}</div>`;
+      }
+      return `<button class="home-theme-chip" data-theme="${escapeAttr(item.name)}" type="button">${escapeHtml(item.name)} <span>(${item.count})</span></button>`;
     }).join('');
     return `<div class="cat-col">${itemsHtml}</div>`;
   }).join('');
