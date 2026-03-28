@@ -180,10 +180,8 @@ function showCatalog(){
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
-function initThemes(sourceThemes = null){
-  const themes = (Array.isArray(sourceThemes) && sourceThemes.length)
-    ? [...sourceThemes]
-    : [...new Set(items.map(i => i.theme).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
+function initThemes(){
+  const themes = [...new Set(items.flatMap(it => allThemesOf(it)))].sort((a,b)=>a.localeCompare(b,'fr'));
 
   themes.forEach(t => {
     const opt = document.createElement('option');
@@ -195,6 +193,12 @@ function initThemes(sourceThemes = null){
 
 function selectTheme(theme){
   if (!theme) return;
+  if (![...themeEl.options].some(o => o.value === theme)) {
+    const opt = document.createElement('option');
+    opt.value = theme;
+    opt.textContent = theme;
+    themeEl.appendChild(opt);
+  }
   themeEl.value = theme;
   showCatalog();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -208,7 +212,7 @@ async function boot(){
 
     items = j.items || [];
     metaEl.textContent = `${j.seller?.name||''} — ${j.seller?.location||''} — ${j.count||items.length} entrées`;
-    initThemes(j.themes);
+    initThemes();
     renderHome();
     showHome();
   } catch (e) {
