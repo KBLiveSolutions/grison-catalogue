@@ -8,6 +8,10 @@ const countEl = document.getElementById('count');
 const metaEl = document.getElementById('meta');
 const categoriesEl = document.getElementById('categories');
 const randomEl = document.getElementById('random-picks');
+const homeEl = document.getElementById('home');
+const catalogEl = document.getElementById('catalog');
+const goHomeBtn = document.getElementById('go-home');
+const goCatalogBtn = document.getElementById('go-catalog');
 
 function numRef(r){ const n = parseInt(String(r||'').replace(/\D+/g,''),10); return Number.isFinite(n)?n:0; }
 function numPrice(p){ const n = parseFloat(String(p||'').replace(',','.')); return Number.isFinite(n)?n:Infinity; }
@@ -40,22 +44,12 @@ function filterItems(){
   const theme = themeEl.value;
 
   let out = items;
-  if(theme) {
-    out = out.filter(it => allThemesOf(it).includes(theme));
-  }
+  if(theme) out = out.filter(it => allThemesOf(it).includes(theme));
 
   if(q){
     out = out.filter(it => normalize([
-      it.reference,
-      it.old_reference,
-      it.author,
-      it.title,
-      it.description,
-      it.editor,
-      it.year,
-      it.price_eur,
-      it.place,
-      ...allThemesOf(it)
+      it.reference, it.old_reference, it.author, it.title, it.description,
+      it.editor, it.year, it.price_eur, it.place, ...allThemesOf(it)
     ].join(' ')).includes(q));
   }
   return sortItems(out);
@@ -67,7 +61,7 @@ function getGallery(it){
   return imgs.filter(u => !u.includes('/search/no-image.gif'));
 }
 
-function render(){
+function renderCatalog(){
   const data = filterItems();
   countEl.textContent = `${data.length} résultat(s)`;
   listEl.innerHTML = data.map((it, idx) => {
@@ -116,7 +110,6 @@ function renderHome(){
     if (!main) return;
     counts.set(main, (counts.get(main) || 0) + 1);
   });
-
   const sortedThemes = [...counts.entries()].sort((a,b)=>a[0].localeCompare(b[0], 'fr'));
   categoriesEl.innerHTML = sortedThemes.map(([theme, count]) =>
     `<button class="home-theme-chip" data-theme="${escapeAttr(theme)}" type="button">${escapeHtml(theme)} <span>(${count})</span></button>`
@@ -146,6 +139,17 @@ function renderHome(){
   }).join('');
 }
 
+function showHome(){
+  homeEl.classList.remove('hidden');
+  catalogEl.classList.add('hidden');
+}
+
+function showCatalog(){
+  homeEl.classList.add('hidden');
+  catalogEl.classList.remove('hidden');
+  renderCatalog();
+}
+
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
@@ -165,37 +169,31 @@ function initThemes(sourceThemes = null){
 function selectTheme(theme){
   if (!theme) return;
   themeEl.value = theme;
-  render();
+  showCatalog();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function boot(){
-  if (window.CATALOG_DATA && window.CATALOG_DATA.items) {
-    const j = window.CATALOG_DATA;
-    items = j.items || [];
-    metaEl.textContent = `${j.seller?.name||''} — ${j.seller?.location||''} — ${j.count||items.length} entrées`;
-    initThemes(j.themes);
-    renderHome();
-    render();
-    return;
-  }
-
   try {
-    const r = await fetch('data/catalog.json');
-    const j = await r.json();
+    const j = (window.CATALOG_DATA && window.CATALOG_DATA.items)
+      ? window.CATALOG_DATA
+      : await (await fetch('data/catalog.json')).json();
+
     items = j.items || [];
     metaEl.textContent = `${j.seller?.name||''} — ${j.seller?.location||''} — ${j.count||items.length} entrées`;
     initThemes(j.themes);
     renderHome();
-    render();
+    showHome();
   } catch (e) {
     metaEl.textContent = 'Erreur de chargement des données.';
   }
 }
 
-qEl.addEventListener('input', render);
-sortEl.addEventListener('change', render);
-themeEl.addEventListener('change', render);
+qEl.addEventListener('input', showCatalog);
+sortEl.addEventListener('change', showCatalog);
+themeEl.addEventListener('change', showCatalog);
+goHomeBtn.addEventListener('click', showHome);
+goCatalogBtn.addEventListener('click', showCatalog);
 
 listEl.addEventListener('click', (e) => {
   const chip = e.target.closest('.theme-chip');

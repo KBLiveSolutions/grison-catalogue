@@ -7,48 +7,60 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>
-    <h1>Catalogue — E. & J.L GRISON</h1>
-    <p id="meta">Chargement…</p>
-    <div class="controls">
-      <input id="q" type="search" placeholder="Rechercher (titre, réf, description)" />
-      <select id="theme">
-        <option value="">Tous les thèmes</option>
-      </select>
-      <select id="sort">
-        <option value="ref_desc">Référence (desc)</option>
-        <option value="ref_asc">Référence (asc)</option>
-        <option value="price_asc">Prix croissant</option>
-        <option value="price_desc">Prix décroissant</option>
-        <option value="title_asc">Titre A→Z</option>
-      </select>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1>Librairie E. & J.L GRISON</h1>
+        <p id="meta">Chargement…</p>
+      </div>
+      <nav class="top-actions">
+        <button id="go-home" type="button" class="ghost-btn">Accueil</button>
+        <button id="go-catalog" type="button" class="ghost-btn">Catalogue</button>
+      </nav>
     </div>
   </header>
 
   <main>
-    <section class="home" id="home">
-      <div class="home-intro card-lite">
-        <h2>Bienvenue dans le catalogue Grison</h2>
-        <p>Explorez par catégories, découvrez des fiches au hasard, puis affinez avec les filtres.</p>
+    <section id="home" class="home-view">
+      <section class="hero card-lite">
+        <h2>Livres anciens & d’occasion</h2>
+        <p>
+          Bienvenue sur le catalogue de la librairie E. & J.L Grison (Toulon).
+          Découvrez nos ouvrages par thèmes, puis consultez les fiches détaillées.
+        </p>
         <div class="contact-box">
-          <strong>Contact</strong><br/>
+          <strong>Coordonnées</strong><br/>
           Mail : <a href="mailto:e.grison@live.fr">e.grison@live.fr</a><br/>
           Tel : <a href="tel:+33673228956">06 73 22 89 56</a>
         </div>
-      </div>
+      </section>
 
-      <div class="card-lite">
+      <section class="card-lite">
         <h3>3 fiches au hasard</h3>
         <div id="random-picks" class="grid random-grid"></div>
-      </div>
+      </section>
 
-      <div class="card-lite">
+      <section class="card-lite">
         <h3>Catégories principales</h3>
         <div id="categories" class="categories-grid"></div>
-      </div>
+      </section>
     </section>
 
-    <section>
+    <section id="catalog" class="catalog-view hidden">
+      <div class="controls card-lite">
+        <input id="q" type="search" placeholder="Rechercher (titre, réf, description)" />
+        <select id="theme">
+          <option value="">Tous les thèmes</option>
+        </select>
+        <select id="sort">
+          <option value="ref_desc">Référence (desc)</option>
+          <option value="ref_asc">Référence (asc)</option>
+          <option value="price_asc">Prix croissant</option>
+          <option value="price_desc">Prix décroissant</option>
+          <option value="title_asc">Titre A→Z</option>
+        </select>
+      </div>
+
       <p id="count"></p>
       <div id="list" class="grid"></div>
     </section>
