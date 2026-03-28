@@ -181,7 +181,8 @@ function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;',
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
 function initThemes(){
-  const themes = [...new Set(items.flatMap(it => allThemesOf(it)))].sort((a,b)=>a.localeCompare(b,'fr'));
+  const themes = [...new Set(items.map(it => String(it.theme || '').trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'fr'));
 
   themes.forEach(t => {
     const opt = document.createElement('option');
