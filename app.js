@@ -46,10 +46,13 @@ function allThemesOf(it){
 function majorCategoryOf(theme){
   const t = normalize(theme).toUpperCase();
 
+  // Dedicated bucket for engravings: keep them out of other categories.
+  if (/(GRAVURE|GRAVURES|ENCYCLOPEDIE - GRAVURES)/.test(t)) return 'Gravures';
+
   if (/(LITTERATURE|LITTÉRATURE|POESIE|POESIE|ENFANTINA|SCOLAIRE|SCOLARITE|ENSEIGNEMENT|REVUE|PERIODIQUE|MAGAZINE|PRESSE|BIBLIOPHILIE|VOCABULAIRE)/.test(t)) return 'Littérature, jeunesse & presse';
   if (/(HISTOIRE|ANCIEN REGIME|REVOLUTION|GUERRE|MILITARIA|COMMUNE DE PARIS|ANTIQUITE|ANTIQUITES|PREHISTOIRE|ARCHEOLOGIE|NUMISMATIQUE)/.test(t)) return 'Histoire, archéologie & militaria';
   if (/(REGIONALISME|FRANCHE COMTE|BOURGOGNE|PROVENCE|SUISSE|COMMUNE|VOYAGE|VOYAGES|GEOGRAPHIE|ATLAS|CARTE|TOURISME|AFRIQUE|EUROPE|MADAGASCAR|COLONISATION|URSS|MARINE|AVIATION)/.test(t)) return 'Régions, géographie & voyages';
-  if (/(ART|GRAVURE|GRAVURES|ENCYCLOPEDIE - GRAVURES|ILLUSTRE|ILLUSTRES|PHOTOGRAPHIE|PHOTOGRAPHIES|CARICATURES|ARCHITECTURE|ALBUM)/.test(t)) return 'Arts, iconographie & photographie';
+  if (/(ART|ILLUSTRE|ILLUSTRES|PHOTOGRAPHIE|PHOTOGRAPHIES|CARICATURES|ARCHITECTURE|ALBUM)/.test(t)) return 'Arts, iconographie & photographie';
   if (/(SCIENCES|SCIENCES NATURELLES|GEOLOGIE|MATHEMATIQUES|BOTANIQUE|MEDECINE|SANITAIRE|THERMALISME|PSYCHOLOGIE)/.test(t)) return 'Sciences, médecine & nature';
   if (/(RELIGION|ESOTERISME|ASTROLOGIE|YOGA)/.test(t)) return 'Religions, ésotérisme & spiritualités';
   if (/(MUSIQUE|SPECTACLE|HUMOUR|JEUX)/.test(t)) return 'Musique, spectacles & loisirs';
@@ -158,32 +161,19 @@ function renderHome(){
 
   const themes = [...counts.entries()]
     .sort((a,b)=>a[0].localeCompare(b[0], 'fr'))
-    .map(([name, count]) => ({ name, count, letter: name.charAt(0).toUpperCase() }));
-
-  const linear = [];
-  let currentLetter = '';
-  for (const t of themes) {
-    if (t.letter !== currentLetter) {
-      linear.push({ type: 'letter', letter: t.letter });
-      currentLetter = t.letter;
-    }
-    linear.push({ type: 'theme', ...t });
-  }
+    .map(([name, count]) => ({ name, count }));
 
   const colCount = 2;
-  const chunkSize = Math.ceil(linear.length / colCount) || 1;
+  const chunkSize = Math.ceil(themes.length / colCount) || 1;
   const cols = [];
   for (let i = 0; i < colCount; i++) {
-    cols.push(linear.slice(i * chunkSize, (i + 1) * chunkSize));
+    cols.push(themes.slice(i * chunkSize, (i + 1) * chunkSize));
   }
 
   categoriesEl.innerHTML = cols.map(col => {
-    const itemsHtml = col.map(item => {
-      if (item.type === 'letter') {
-        return `<div class="letter-sep">${escapeHtml(item.letter)}</div>`;
-      }
-      return `<button class="home-theme-chip" data-theme="${escapeAttr(item.name)}" type="button">${escapeHtml(item.name)} <span>(${item.count})</span></button>`;
-    }).join('');
+    const itemsHtml = col.map(item =>
+      `<button class="home-theme-chip" data-theme="${escapeAttr(item.name)}" type="button">${escapeHtml(item.name)} <span>(${item.count})</span></button>`
+    ).join('');
     return `<div class="cat-col">${itemsHtml}</div>`;
   }).join('');
 }
