@@ -43,11 +43,32 @@ function allThemesOf(it){
   return [...new Set(arr.filter(Boolean))];
 }
 
+function majorCategoryOf(theme){
+  const t = normalize(theme).toUpperCase();
+
+  if (/(LITTERATURE|LITTÉRATURE|POESIE|POESIE|ENFANTINA|SCOLAIRE|SCOLARITE|ENSEIGNEMENT|REVUE|PERIODIQUE|MAGAZINE|PRESSE|BIBLIOPHILIE|VOCABULAIRE)/.test(t)) return 'Littérature, jeunesse & presse';
+  if (/(HISTOIRE|ANCIEN REGIME|REVOLUTION|GUERRE|MILITARIA|COMMUNE DE PARIS|ANTIQUITE|ANTIQUITES|PREHISTOIRE|ARCHEOLOGIE|NUMISMATIQUE)/.test(t)) return 'Histoire, archéologie & militaria';
+  if (/(REGIONALISME|FRANCHE COMTE|BOURGOGNE|PROVENCE|SUISSE|COMMUNE|VOYAGE|VOYAGES|GEOGRAPHIE|ATLAS|CARTE|TOURISME|AFRIQUE|EUROPE|MADAGASCAR|COLONISATION|URSS|MARINE|AVIATION)/.test(t)) return 'Régions, géographie & voyages';
+  if (/(ART|GRAVURE|GRAVURES|ENCYCLOPEDIE - GRAVURES|ILLUSTRE|ILLUSTRES|PHOTOGRAPHIE|PHOTOGRAPHIES|CARICATURES|ARCHITECTURE|ALBUM)/.test(t)) return 'Arts, iconographie & photographie';
+  if (/(SCIENCES|SCIENCES NATURELLES|GEOLOGIE|MATHEMATIQUES|BOTANIQUE|MEDECINE|SANITAIRE|THERMALISME|PSYCHOLOGIE)/.test(t)) return 'Sciences, médecine & nature';
+  if (/(RELIGION|ESOTERISME|ASTROLOGIE|YOGA)/.test(t)) return 'Religions, ésotérisme & spiritualités';
+  if (/(MUSIQUE|SPECTACLE|HUMOUR|JEUX)/.test(t)) return 'Musique, spectacles & loisirs';
+  if (/(TECHNIQUES|TECHNIQUE|AGRICULTURE|VIE PRATIQUE|COUTURE|AUTOMOBILE|IMPRIMERIE|PECHE)/.test(t)) return 'Techniques, métiers & vie pratique';
+  if (/(CUISINE|SPORT|SPORTS|SCOUTISME)/.test(t)) return 'Sports, cuisine & activités';
+  if (/(LIVRES ANCIENS|ANCIENS|ANCIEN|MANUSCRIT|EDITION ORIGINALE|EDITIONS ROBERT MOREL|CATALOGUE|DICTIONNAIRE|VARIA|REG 5)/.test(t)) return 'Livres anciens, rares & divers';
+
+  return 'Livres anciens, rares & divers';
+}
+
+function allMajorCategoriesOf(it){
+  return [...new Set(allThemesOf(it).map(majorCategoryOf))];
+}
+
 function themeRank(it, selectedTheme){
   if (!selectedTheme) return 99;
-  const themes = allThemesOf(it);
-  const idx = themes.indexOf(selectedTheme);
-  return idx === -1 ? 99 : idx; // 0=TH1, 1=TH2, 2=TH3...
+  const cats = allMajorCategoriesOf(it);
+  const idx = cats.indexOf(selectedTheme);
+  return idx === -1 ? 99 : idx;
 }
 
 function filterItems(){
@@ -55,12 +76,12 @@ function filterItems(){
   const selectedTheme = themeEl.value;
 
   let out = items;
-  if(selectedTheme) out = out.filter(it => allThemesOf(it).includes(selectedTheme));
+  if(selectedTheme) out = out.filter(it => allMajorCategoriesOf(it).includes(selectedTheme));
 
   if(q){
     out = out.filter(it => normalize([
       it.reference, it.old_reference, it.author, it.title, it.description,
-      it.editor, it.year, it.price_eur, it.place, ...allThemesOf(it)
+      it.editor, it.year, it.price_eur, it.place, ...allThemesOf(it), ...allMajorCategoriesOf(it)
     ].join(' ')).includes(q));
   }
 
@@ -97,6 +118,7 @@ function renderCatalog(){
       ? `<img id="main-${idx}" class="thumb" loading="lazy" src="${escapeAttr(mainImg)}" alt="${escapeAttr(it.title||'Livre')}" onerror="this.style.display='none'; var n=this.nextElementSibling; if(n&&n.classList.contains('no-thumb')) n.style.display='flex';" /><div class="no-thumb" style="display:none">Image sur demande</div>`
       : `<div class="no-thumb">Image sur demande</div>`;
 
+    const majorCategory = majorCategoryOf(it.theme || allThemesOf(it)[0] || '');
     const mainThemeChip = it.theme
       ? `<button class="theme-chip" data-theme="${escapeAttr(it.theme)}" type="button">${escapeHtml(it.theme)}</button>`
       : '—';
@@ -116,6 +138,7 @@ function renderCatalog(){
         <div><strong>Année:</strong> ${escapeHtml(it.year||'—')}</div>
         <div><strong>Prix:</strong> ${escapeHtml(it.price_eur||'—')} €</div>
         <div><strong>Lieu:</strong> ${escapeHtml(it.place||'—')}</div>
+        <div><strong>Grande catégorie:</strong> <button class="theme-chip" data-theme="${escapeAttr(majorCategory)}" type="button">${escapeHtml(majorCategory)}</button></div>
         <div><strong>Thème principal:</strong> ${mainThemeChip}</div>
         <div><strong>Autres thèmes:</strong> ${otherThemeChips}</div>
       </div>
@@ -128,16 +151,15 @@ function renderCatalog(){
 function renderHome(){
   const counts = new Map();
   items.forEach(it => {
-    const main = String(it.theme || '').trim();
-    if (!main) return;
-    counts.set(main, (counts.get(main) || 0) + 1);
+    allMajorCategoriesOf(it).forEach(cat => {
+      counts.set(cat, (counts.get(cat) || 0) + 1);
+    });
   });
 
   const themes = [...counts.entries()]
     .sort((a,b)=>a[0].localeCompare(b[0], 'fr'))
     .map(([name, count]) => ({ name, count, letter: name.charAt(0).toUpperCase() }));
 
-  // Flux alphabétique continu: A..., B..., C... puis colonne suivante = suite
   const linear = [];
   let currentLetter = '';
   for (const t of themes) {
@@ -148,7 +170,7 @@ function renderHome(){
     linear.push({ type: 'theme', ...t });
   }
 
-  const colCount = 5;
+  const colCount = 2;
   const chunkSize = Math.ceil(linear.length / colCount) || 1;
   const cols = [];
   for (let i = 0; i < colCount; i++) {
@@ -181,26 +203,32 @@ function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;',
 function escapeAttr(s){ return String(s).replace(/"/g,'&quot;'); }
 
 function initThemes(){
-  const themes = [...new Set(items.map(it => String(it.theme || '').trim()).filter(Boolean))]
-    .sort((a,b)=>a.localeCompare(b,'fr'));
+  const counts = new Map();
+  items.forEach(it => {
+    allMajorCategoriesOf(it).forEach(cat => counts.set(cat, (counts.get(cat) || 0) + 1));
+  });
 
-  themes.forEach(t => {
+  const themes = [...counts.entries()]
+    .sort((a,b)=>a[0].localeCompare(b[0],'fr'));
+
+  themes.forEach(([t, n]) => {
     const opt = document.createElement('option');
     opt.value = t;
-    opt.textContent = t;
+    opt.textContent = `${t} (${n})`;
     themeEl.appendChild(opt);
   });
 }
 
 function selectTheme(theme){
   if (!theme) return;
-  if (![...themeEl.options].some(o => o.value === theme)) {
+  const group = majorCategoryOf(theme);
+  if (![...themeEl.options].some(o => o.value === group)) {
     const opt = document.createElement('option');
-    opt.value = theme;
-    opt.textContent = theme;
+    opt.value = group;
+    opt.textContent = group;
     themeEl.appendChild(opt);
   }
-  themeEl.value = theme;
+  themeEl.value = group;
   showCatalog();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
