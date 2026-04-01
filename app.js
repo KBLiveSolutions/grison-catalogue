@@ -82,24 +82,31 @@ function inferMajorCategoryFromItem(it){
   return 'Livres anciens, rares & divers';
 }
 
+function primaryThemeOf(it){
+  const direct = String(it?.theme || '').trim();
+  if (direct) return direct;
+
+  const themes = allThemesOf(it);
+  if (themes.length) return themes[0];
+
+  return '';
+}
+
+function primaryMajorCategoryOf(it){
+  const primaryTheme = primaryThemeOf(it);
+  if (primaryTheme) {
+    const cat = majorCategoryOf(primaryTheme);
+    if (cat && cat !== 'Livres anciens, rares & divers') return cat;
+  }
+
+  const inferred = inferMajorCategoryFromItem(it);
+  if (inferred) return inferred;
+
+  return 'Livres anciens, rares & divers';
+}
+
 function allMajorCategoriesOf(it){
-  const byTheme = allThemesOf(it).map(majorCategoryOf);
-  const cats = [...new Set(byTheme)];
-
-  // If item falls only in the broad catch-all, try reclassifying from metadata.
-  if (!cats.length || (cats.length === 1 && cats[0] === 'Livres anciens, rares & divers')) {
-    return [inferMajorCategoryFromItem(it)];
-  }
-
-  // If catch-all appears with a more precise inferred category, drop catch-all.
-  if (cats.includes('Livres anciens, rares & divers')) {
-    const inferred = inferMajorCategoryFromItem(it);
-    if (inferred !== 'Livres anciens, rares & divers') {
-      return [...new Set(cats.filter(c => c !== 'Livres anciens, rares & divers').concat(inferred))];
-    }
-  }
-
-  return cats;
+  return [primaryMajorCategoryOf(it)];
 }
 
 function themeRank(it, selectedTheme){
